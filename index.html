@@ -135,9 +135,9 @@
 </div>
 
 <script>
-
-const phoneNumber = "628xxxxxxxxxx"; 
-// GANTI dengan nomor WhatsApp kamu
+// --- KONFIGURASI NOMOR WHATSAPP ---
+// Pastikan hanya angka, awali dengan 62 (tanpa tanda +)
+const phoneNumber = "62895345452412"; 
 
 const menus = [
   {
@@ -150,7 +150,6 @@ const menus = [
       ["125gr",12000],
     ]
   },
-
   {
     category:"Usus Crispy",
     items:[
@@ -160,7 +159,6 @@ const menus = [
       ["100gr",13000],
     ]
   },
-
   {
     category:"Basreng Stik",
     items:[
@@ -170,7 +168,6 @@ const menus = [
       ["125gr",13000],
     ]
   },
-
   {
     category:"Baso Aci",
     items:[
@@ -180,7 +177,6 @@ const menus = [
       ["Original",6000],
     ]
   },
-
   {
     category:"Menu Lainnya",
     items:[
@@ -198,20 +194,16 @@ const menus = [
 const menuList = document.getElementById("menu-list");
 
 menus.forEach((menu,menuIndex)=>{
-
   let html = `
     <div class="product">
       <h3>${menu.category}</h3>
   `;
-
   menu.items.forEach((item,itemIndex)=>{
-
     html += `
       <div class="item">
         <div>
           ${item[0]} - Rp ${item[1].toLocaleString("id-ID")}
         </div>
-
         <input 
           type="checkbox"
           data-name="${menu.category} ${item[0]}"
@@ -221,28 +213,21 @@ menus.forEach((menu,menuIndex)=>{
       </div>
     `;
   });
-
   html += `</div>`;
-
   menuList.innerHTML += html;
-
 });
 
 function updateTotal(){
-
   let total = 0;
-
   document.querySelectorAll("input[type=checkbox]:checked")
   .forEach(item=>{
     total += Number(item.dataset.price);
   });
-
   document.getElementById("total").innerText =
     total.toLocaleString("id-ID");
 }
 
 function checkoutWA(){
-
   let selected = document.querySelectorAll("input[type=checkbox]:checked");
 
   if(selected.length === 0){
@@ -250,31 +235,29 @@ function checkoutWA(){
     return;
   }
 
-  let message = "Halo kak, saya mau pesan:%0A%0A";
-
+  // Membuat pesan teks
+  let message = "Halo kak, saya mau pesan:\n\n";
   let total = 0;
 
   selected.forEach((item,index)=>{
-
     const name = item.dataset.name;
     const price = Number(item.dataset.price);
-
     total += price;
-
-    message += `${index+1}. ${name} - Rp ${price.toLocaleString("id-ID")}%0A`;
+    message += `${index+1}. ${name} - Rp ${price.toLocaleString("id-ID")}\n`;
   });
 
-  message += `%0A--------------------%0A`;
-  message += `TOTAL : Rp ${total.toLocaleString("id-ID")}%0A`;
-  message += `--------------------%0A`;
+  message += `\n--------------------\n`;
+  message += `TOTAL : Rp ${total.toLocaleString("id-ID")}\n`;
+  message += `--------------------\n`;
   message += `Terima kasih kak 🙏`;
 
-  window.open(
-    `https://wa.me/${+62895345452412}?text=${message}`,
-    "_blank"
-  );
+  // Perbaikan Link WhatsApp:
+  // 1. Gunakan encodeURIComponent agar karakter spesial (spasi, ganti baris) terbaca benar
+  // 2. Gunakan variabel phoneNumber yang sudah didefinisikan
+  const finalLink = "https://wa.me/" + phoneNumber + "?text=" + encodeURIComponent(message);
+  
+  window.open(finalLink, "_blank");
 }
-
 </script>
 
 </body>
