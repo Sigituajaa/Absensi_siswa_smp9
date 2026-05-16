@@ -59,6 +59,20 @@
       padding-bottom:8px;
     }
 
+    .item-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-input {
+      width: 45px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      text-align: center;
+    }
+
     .checkout{
       position:sticky;
       bottom:0;
@@ -98,8 +112,9 @@
     }
 
     input[type="checkbox"]{
-      width:20px;
-      height:20px;
+      width:22px;
+      height:22px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -136,7 +151,6 @@
 
 <script>
 // --- KONFIGURASI NOMOR WHATSAPP ---
-// Pastikan hanya angka, awali dengan 62 (tanpa tanda +)
 const phoneNumber = "62895345452412"; 
 
 const menus = [
@@ -193,23 +207,39 @@ const menus = [
 
 const menuList = document.getElementById("menu-list");
 
-menus.forEach((menu,menuIndex)=>{
+menus.forEach((menu, menuIndex) => {
   let html = `
     <div class="product">
       <h3>${menu.category}</h3>
   `;
-  menu.items.forEach((item,itemIndex)=>{
+  menu.items.forEach((item, itemIndex) => {
+    // Memberikan ID unik untuk setiap baris agar mudah dikelola
+    const itemId = `item-${menuIndex}-${itemIndex}`;
     html += `
       <div class="item">
         <div>
-          ${item[0]} - Rp ${item[1].toLocaleString("id-ID")}
+          ${item[0]} <br>
+          <small style="color:#888">Rp ${item[1].toLocaleString("id-ID")}</small>
         </div>
-        <input 
-          type="checkbox"
-          data-name="${menu.category} ${item[0]}"
-          data-price="${item[1]}"
-          onchange="updateTotal()"
-        >
+        <div class="item-controls">
+          <input 
+            type="number" 
+            class="qty-input" 
+            id="qty-${itemId}" 
+            value="1" 
+            min="1" 
+            onchange="autoCheck('${itemId}')"
+          >
+          <input 
+            type="checkbox"
+            id="check-${itemId}"
+            class="product-checkbox"
+            data-name="${menu.category} ${item[0]}"
+            data-price="${item[1]}"
+            data-qtyid="qty-${itemId}"
+            onchange="updateTotal()"
+          >
+        </div>
       </div>
     `;
   });
@@ -217,45 +247,52 @@ menus.forEach((menu,menuIndex)=>{
   menuList.innerHTML += html;
 });
 
+// Fungsi agar jika angka diganti, checkbox otomatis tercentang
+function autoCheck(id) {
+  document.getElementById('check-' + id).checked = true;
+  updateTotal();
+}
+
 function updateTotal(){
   let total = 0;
-  document.querySelectorAll("input[type=checkbox]:checked")
-  .forEach(item=>{
-    total += Number(item.dataset.price);
+  document.querySelectorAll(".product-checkbox:checked").forEach(item => {
+    const qtyInput = document.getElementById(item.dataset.qtyid);
+    const qty = parseInt(qtyInput.value) || 1;
+    const price = Number(item.dataset.price);
+    total += (price * qty);
   });
-  document.getElementById("total").innerText =
-    total.toLocaleString("id-ID");
+  document.getElementById("total").innerText = total.toLocaleString("id-ID");
 }
 
 function checkoutWA(){
-  let selected = document.querySelectorAll("input[type=checkbox]:checked");
+  let selected = document.querySelectorAll(".product-checkbox:checked");
 
   if(selected.length === 0){
     alert("Silahkan pilih menu dulu.");
     return;
   }
 
-  // Membuat pesan teks
   let message = "Halo kak, saya mau pesan:\n\n";
-  let total = 0;
+  let totalKeseluruhan = 0;
 
-  selected.forEach((item,index)=>{
+  selected.forEach((item, index) => {
     const name = item.dataset.name;
     const price = Number(item.dataset.price);
-    total += price;
-    message += `${index+1}. ${name} - Rp ${price.toLocaleString("id-ID")}\n`;
+    const qty = parseInt(document.getElementById(item.dataset.qtyid).value) || 1;
+    const subtotal = price * qty;
+    
+    totalKeseluruhan += subtotal;
+    
+    // Format: 1. 2x Keripik Kaca 1Kg - Rp 140.000
+    message += `${index + 1}. ${qty}x ${name} - Rp ${subtotal.toLocaleString("id-ID")}\n`;
   });
 
   message += `\n--------------------\n`;
-  message += `TOTAL : Rp ${total.toLocaleString("id-ID")}\n`;
+  message += `TOTAL : Rp ${totalKeseluruhan.toLocaleString("id-ID")}\n`;
   message += `--------------------\n`;
   message += `Terima kasih kak 🙏`;
 
-  // Perbaikan Link WhatsApp:
-  // 1. Gunakan encodeURIComponent agar karakter spesial (spasi, ganti baris) terbaca benar
-  // 2. Gunakan variabel phoneNumber yang sudah didefinisikan
   const finalLink = "https://wa.me/" + phoneNumber + "?text=" + encodeURIComponent(message);
-  
   window.open(finalLink, "_blank");
 }
 </script>
