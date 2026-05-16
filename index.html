@@ -7,7 +7,7 @@
 
   <style>
     body{
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background:#fff8f0;
       margin:0;
       padding:0;
@@ -20,6 +20,7 @@
       text-align:center;
       font-size:24px;
       font-weight:bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     .container{
@@ -48,29 +49,60 @@
     .product h3{
       margin-top:0;
       color:#ff5722;
+      border-bottom: 2px solid #fff8f0;
+      padding-bottom: 5px;
     }
 
     .item{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      margin:8px 0;
+      margin:12px 0;
       border-bottom:1px solid #eee;
-      padding-bottom:8px;
+      padding-bottom:12px;
     }
 
-    .item-controls {
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: bold;
+      display: block;
+    }
+
+    .item-price {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .qty-control {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      margin-right: 15px;
+    }
+
+    .btn-qty {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #ff5722;
+      background: white;
+      color: #ff5722;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .qty-input {
-      width: 45px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      width: 30px;
       text-align: center;
+      border: none;
+      font-weight: bold;
+      font-size: 16px;
     }
 
     .checkout{
@@ -78,7 +110,7 @@
       bottom:0;
       background:white;
       padding:15px;
-      box-shadow:0 -2px 10px rgba(0,0,0,0.1);
+      box-shadow:0 -5px 15px rgba(0,0,0,0.1);
       margin-top:20px;
     }
 
@@ -87,9 +119,11 @@
       font-weight:bold;
       margin-bottom:10px;
       color:#ff5722;
+      display: flex;
+      justify-content: space-between;
     }
 
-    button{
+    button.btn-order {
       width:100%;
       padding:15px;
       border:none;
@@ -99,22 +133,18 @@
       font-size:18px;
       font-weight:bold;
       cursor:pointer;
+      transition: 0.3s;
     }
 
-    button:hover{
-      opacity:0.9;
-    }
-
-    .note{
-      margin-top:10px;
-      font-size:13px;
-      color:#666;
+    button.btn-order:hover{
+      background: #1eb954;
     }
 
     input[type="checkbox"]{
-      width:22px;
-      height:22px;
+      width:24px;
+      height:24px;
       cursor: pointer;
+      accent-color: #ff5722;
     }
   </style>
 </head>
@@ -125,121 +155,91 @@
 </header>
 
 <div class="container">
-
   <div class="welcome">
-    <b>Halo kak, mau pilih cemilan apa kak? 🤗</b><br><br>
-    Ready untuk cemilan silahkan dipilih.
+    <b>Halo kak, mau pilih cemilan apa kak? 🤗</b><br>
+    Silahkan tentukan jumlah (qty) dan centang barang yang ingin dipesan.
   </div>
 
   <div id="menu-list"></div>
 
   <div class="checkout">
     <div class="total">
-      Total: Rp <span id="total">0</span>
+      <span>Total Bayar:</span>
+      <span>Rp <span id="total">0</span></span>
     </div>
 
-    <button onclick="checkoutWA()">
+    <button class="btn-order" onclick="checkoutWA()">
       Pesan via WhatsApp
     </button>
-
-    <div class="note">
-      Setelah klik tombol, nota otomatis terkirim ke WhatsApp penjual.
-    </div>
   </div>
-
 </div>
 
 <script>
-// --- KONFIGURASI NOMOR WHATSAPP ---
 const phoneNumber = "62895345452412"; 
 
 const menus = [
   {
     category:"Keripik Kaca",
     items:[
-      ["1Kg",70000],
-      ["500gr",36000],
-      ["250gr",22000],
-      ["100gr",10000],
-      ["125gr",12000],
+      ["1Kg",70000], ["500gr",36000], ["250gr",22000], ["100gr",10000], ["125gr",12000]
     ]
   },
   {
     category:"Usus Crispy",
     items:[
-      ["1Kg",105000],
-      ["500gr",55000],
-      ["250gr",28000],
-      ["100gr",13000],
+      ["1Kg",105000], ["500gr",55000], ["250gr",28000], ["100gr",13000]
     ]
   },
   {
     category:"Basreng Stik",
     items:[
-      ["1Kg",75000],
-      ["500gr",45000],
-      ["250gr",23000],
-      ["125gr",13000],
+      ["1Kg",75000], ["500gr",45000], ["250gr",23000], ["125gr",13000]
     ]
   },
   {
     category:"Baso Aci",
     items:[
-      ["Ayam Suir",10000],
-      ["Tetelan",10000],
-      ["Urat",12000],
-      ["Original",6000],
+      ["Ayam Suir",10000], ["Tetelan",10000], ["Urat",12000], ["Original",6000]
     ]
   },
   {
     category:"Menu Lainnya",
     items:[
-      ["Basreng Bojot",5000],
-      ["Otak-Otak Bojot",5000],
-      ["Cireng Isi",2000],
-      ["Cireng Kuah Keju Creamy",10000],
-      ["Aneka ES",2000],
-      ["Pop Ice",3000],
-      ["Good Day Freeze",5000],
+      ["Basreng Bojot",5000], ["Otak-Otak Bojot",5000], ["Cireng Isi",2000],
+      ["Cireng Kuah Keju Creamy",10000], ["Aneka ES",2000], ["Pop Ice",3000], ["Good Day Freeze",5000]
     ]
   }
 ];
 
 const menuList = document.getElementById("menu-list");
 
-menus.forEach((menu, menuIndex) => {
-  let html = `
-    <div class="product">
-      <h3>${menu.category}</h3>
-  `;
-  menu.items.forEach((item, itemIndex) => {
-    // Memberikan ID unik untuk setiap baris agar mudah dikelola
-    const itemId = `item-${menuIndex}-${itemIndex}`;
+// Render Menu
+menus.forEach((menu, mIdx) => {
+  let html = `<div class="product"><h3>${menu.category}</h3>`;
+  menu.items.forEach((item, iIdx) => {
+    const itemId = `item_${mIdx}_${iIdx}`;
     html += `
       <div class="item">
-        <div>
-          ${item[0]} <br>
-          <small style="color:#888">Rp ${item[1].toLocaleString("id-ID")}</small>
+        <div class="item-info">
+          <span class="item-name">${item[0]}</span>
+          <span class="item-price">Rp ${item[1].toLocaleString("id-ID")}</span>
         </div>
-        <div class="item-controls">
-          <input 
-            type="number" 
-            class="qty-input" 
-            id="qty-${itemId}" 
-            value="1" 
-            min="1" 
-            onchange="autoCheck('${itemId}')"
-          >
-          <input 
-            type="checkbox"
-            id="check-${itemId}"
-            class="product-checkbox"
-            data-name="${menu.category} ${item[0]}"
-            data-price="${item[1]}"
-            data-qtyid="qty-${itemId}"
-            onchange="updateTotal()"
-          >
+        
+        <div class="qty-control">
+          <button class="btn-qty" onclick="changeQty('${itemId}', -1)">-</button>
+          <input type="text" class="qty-input" id="qty-${itemId}" value="1" readonly>
+          <button class="btn-qty" onclick="changeQty('${itemId}', 1)">+</button>
         </div>
+
+        <input 
+          type="checkbox" 
+          id="check-${itemId}" 
+          class="item-checkbox"
+          data-name="${menu.category} ${item[0]}" 
+          data-price="${item[1]}" 
+          data-id="${itemId}"
+          onchange="updateTotal()"
+        >
       </div>
     `;
   });
@@ -247,53 +247,61 @@ menus.forEach((menu, menuIndex) => {
   menuList.innerHTML += html;
 });
 
-// Fungsi agar jika angka diganti, checkbox otomatis tercentang
-function autoCheck(id) {
-  document.getElementById('check-' + id).checked = true;
+// Fungsi Tambah Kurang Qty
+function changeQty(id, delta) {
+  const input = document.getElementById(`qty-${id}`);
+  const checkbox = document.getElementById(`check-${id}`);
+  let val = parseInt(input.value) + delta;
+  
+  if (val < 1) val = 1;
+  input.value = val;
+
+  // Jika qty diubah, otomatis centang itemnya
+  checkbox.checked = true;
   updateTotal();
 }
 
-function updateTotal(){
+// Update Total Harga
+function updateTotal() {
   let total = 0;
-  document.querySelectorAll(".product-checkbox:checked").forEach(item => {
-    const qtyInput = document.getElementById(item.dataset.qtyid);
-    const qty = parseInt(qtyInput.value) || 1;
-    const price = Number(item.dataset.price);
+  document.querySelectorAll(".item-checkbox:checked").forEach(cb => {
+    const id = cb.dataset.id;
+    const price = parseInt(cb.dataset.price);
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
     total += (price * qty);
   });
   document.getElementById("total").innerText = total.toLocaleString("id-ID");
 }
 
-function checkoutWA(){
-  let selected = document.querySelectorAll(".product-checkbox:checked");
-
-  if(selected.length === 0){
-    alert("Silahkan pilih menu dulu.");
+// Kirim ke WhatsApp
+function checkoutWA() {
+  const selected = document.querySelectorAll(".item-checkbox:checked");
+  
+  if (selected.length === 0) {
+    alert("Pilih minimal satu cemilan dulu ya kak.");
     return;
   }
 
-  let message = "Halo kak, saya mau pesan:\n\n";
-  let totalKeseluruhan = 0;
+  let message = "Halo OKTSHOP17, saya mau pesan cemilan:\n\n";
+  let grandTotal = 0;
 
-  selected.forEach((item, index) => {
-    const name = item.dataset.name;
-    const price = Number(item.dataset.price);
-    const qty = parseInt(document.getElementById(item.dataset.qtyid).value) || 1;
+  selected.forEach((cb, index) => {
+    const id = cb.dataset.id;
+    const name = cb.dataset.name;
+    const price = parseInt(cb.dataset.price);
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
     const subtotal = price * qty;
-    
-    totalKeseluruhan += subtotal;
-    
-    // Format: 1. 2x Keripik Kaca 1Kg - Rp 140.000
-    message += `${index + 1}. ${qty}x ${name} - Rp ${subtotal.toLocaleString("id-ID")}\n`;
+    grandTotal += subtotal;
+
+    message += `${index + 1}. *${name}*\n`;
+    message += `   ${qty} pcs x Rp ${price.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}\n`;
   });
 
-  message += `\n--------------------\n`;
-  message += `TOTAL : Rp ${totalKeseluruhan.toLocaleString("id-ID")}\n`;
-  message += `--------------------\n`;
-  message += `Terima kasih kak 🙏`;
+  message += `\n*TOTAL PEMBAYARAN: Rp ${grandTotal.toLocaleString("id-ID")}*`;
+  message += `\n\nAlamat Pengiriman: (Tulis di sini)`;
 
-  const finalLink = "https://wa.me/" + phoneNumber + "?text=" + encodeURIComponent(message);
-  window.open(finalLink, "_blank");
+  const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
 }
 </script>
 
