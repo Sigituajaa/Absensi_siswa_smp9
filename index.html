@@ -103,6 +103,31 @@
       border: none;
       font-weight: bold;
       font-size: 16px;
+      background: transparent;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #333;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
     }
 
     .checkout{
@@ -160,7 +185,44 @@
     Silahkan tentukan jumlah (qty) dan centang barang yang ingin dipesan.
   </div>
 
+  <!-- Daftar Menu -->
   <div id="menu-list"></div>
+
+  <!-- Form Data Pengiriman -->
+  <div class="product">
+    <h3>Detail Pengiriman & Pembayaran</h3>
+    
+    <div class="form-group">
+      <label>Nama Penerima:</label>
+      <input type="text" id="buyer_name" placeholder="Masukkan nama Anda">
+    </div>
+
+    <div class="form-group">
+      <label>No. Penerima (WhatsApp):</label>
+      <input type="tel" id="buyer_phone" placeholder="Contoh: 08123456789">
+    </div>
+
+    <div class="form-group">
+      <label>Alamat Kirim:</label>
+      <textarea id="buyer_address" placeholder="Tulis alamat lengkap (Jalan, No. Rumah, Patokan)"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Metode Pembayaran:</label>
+      <select id="payment_method">
+        <option value="Transfer / QRIS">Transfer / QRIS</option>
+        <option value="Cash / COD">Cash / COD</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Kirim Pakai:</label>
+      <select id="delivery_method">
+        <option value="COD">COD</option>
+        <option value="MAXIM">MAXIM</option>
+      </select>
+    </div>
+  </div>
 
   <div class="checkout">
     <div class="total">
@@ -247,7 +309,6 @@ menus.forEach((menu, mIdx) => {
   menuList.innerHTML += html;
 });
 
-// Fungsi Tambah Kurang Qty
 function changeQty(id, delta) {
   const input = document.getElementById(`qty-${id}`);
   const checkbox = document.getElementById(`check-${id}`);
@@ -256,12 +317,10 @@ function changeQty(id, delta) {
   if (val < 1) val = 1;
   input.value = val;
 
-  // Jika qty diubah, otomatis centang itemnya
   checkbox.checked = true;
   updateTotal();
 }
 
-// Update Total Harga
 function updateTotal() {
   let total = 0;
   document.querySelectorAll(".item-checkbox:checked").forEach(cb => {
@@ -273,32 +332,53 @@ function updateTotal() {
   document.getElementById("total").innerText = total.toLocaleString("id-ID");
 }
 
-// Kirim ke WhatsApp
 function checkoutWA() {
   const selected = document.querySelectorAll(".item-checkbox:checked");
   
+  // Ambil data form
+  const name = document.getElementById("buyer_name").value;
+  const phone = document.getElementById("buyer_phone").value;
+  const address = document.getElementById("buyer_address").value;
+  const payment = document.getElementById("payment_method").value;
+  const delivery = document.getElementById("delivery_method").value;
+
   if (selected.length === 0) {
     alert("Pilih minimal satu cemilan dulu ya kak.");
     return;
   }
 
-  let message = "Halo OKTSHOP17, saya mau pesan cemilan:\n\n";
-  let grandTotal = 0;
+  if (!name || !phone || !address) {
+    alert("Harap lengkapi data penerima dan alamat ya kak.");
+    return;
+  }
 
+  let message = "*PESANAN CEMILAN - OKTSHOP17*\n";
+  message += "--------------------------------------\n";
+  
+  let grandTotal = 0;
   selected.forEach((cb, index) => {
     const id = cb.dataset.id;
-    const name = cb.dataset.name;
+    const itemName = cb.dataset.name;
     const price = parseInt(cb.dataset.price);
     const qty = parseInt(document.getElementById(`qty-${id}`).value);
     const subtotal = price * qty;
     grandTotal += subtotal;
 
-    message += `${index + 1}. *${name}*\n`;
-    message += `   ${qty} pcs x Rp ${price.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}\n`;
+    message += `${index + 1}. *${itemName}*\n`;
+    message += `   ${qty} x Rp ${price.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}\n`;
   });
 
-  message += `\n*TOTAL PEMBAYARAN: Rp ${grandTotal.toLocaleString("id-ID")}*`;
-  message += `\n\nAlamat Pengiriman: (Tulis di sini)`;
+  message += "--------------------------------------\n";
+  message += `*TOTAL BAYAR: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n`;
+  
+  message += `*DETAIL PENERIMA:*\n`;
+  message += `👤 Nama: ${name}\n`;
+  message += `📞 No. HP: ${phone}\n`;
+  message += `📍 Alamat: ${address}\n\n`;
+  
+  message += `*METODE PESANAN:*\n`;
+  message += `💳 Bayar via: ${payment}\n`;
+  message += `🚚 Kirim pakai: ${delivery}\n`;
 
   const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
