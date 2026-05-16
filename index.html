@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OKTSHOP17 - Pesan Cemilan</title>
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#fff8f0;
+      margin:0;
+      padding:0;
+    }
+
+    header{
+      background:#ff5722;
+      color:white;
+      padding:20px;
+      text-align:center;
+      font-size:24px;
+      font-weight:bold;
+    }
+
+    .container{
+      padding:15px;
+      max-width:700px;
+      margin:auto;
+    }
+
+    .welcome{
+      background:white;
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      line-height:1.6;
+    }
+
+    .product{
+      background:white;
+      margin-bottom:15px;
+      padding:15px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .product h3{
+      margin-top:0;
+      color:#ff5722;
+    }
+
+    .item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin:8px 0;
+      border-bottom:1px solid #eee;
+      padding-bottom:8px;
+    }
+
+    .checkout{
+      position:sticky;
+      bottom:0;
+      background:white;
+      padding:15px;
+      box-shadow:0 -2px 10px rgba(0,0,0,0.1);
+      margin-top:20px;
+    }
+
+    .total{
+      font-size:22px;
+      font-weight:bold;
+      margin-bottom:10px;
+      color:#ff5722;
+    }
+
+    button{
+      width:100%;
+      padding:15px;
+      border:none;
+      border-radius:10px;
+      background:#25D366;
+      color:white;
+      font-size:18px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    button:hover{
+      opacity:0.9;
+    }
+
+    .note{
+      margin-top:10px;
+      font-size:13px;
+      color:#666;
+    }
+
+    input[type="checkbox"]{
+      width:20px;
+      height:20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  OKTSHOP17 - Pesan Cemilan
+</header>
+
+<div class="container">
+
+  <div class="welcome">
+    <b>Halo kak, mau pilih cemilan apa kak? 🤗</b><br><br>
+    Ready untuk cemilan silahkan dipilih.
+  </div>
+
+  <div id="menu-list"></div>
+
+  <div class="checkout">
+    <div class="total">
+      Total: Rp <span id="total">0</span>
+    </div>
+
+    <button onclick="checkoutWA()">
+      Pesan via WhatsApp
+    </button>
+
+    <div class="note">
+      Setelah klik tombol, nota otomatis terkirim ke WhatsApp penjual.
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const phoneNumber = "628xxxxxxxxxx"; 
+// GANTI dengan nomor WhatsApp kamu
+
+const menus = [
+  {
+    category:"Keripik Kaca",
+    items:[
+      ["1Kg",70000],
+      ["500gr",36000],
+      ["250gr",22000],
+      ["100gr",10000],
+      ["125gr",12000],
+    ]
+  },
+
+  {
+    category:"Usus Crispy",
+    items:[
+      ["1Kg",105000],
+      ["500gr",55000],
+      ["250gr",28000],
+      ["100gr",13000],
+    ]
+  },
+
+  {
+    category:"Basreng Stik",
+    items:[
+      ["1Kg",75000],
+      ["500gr",45000],
+      ["250gr",23000],
+      ["125gr",13000],
+    ]
+  },
+
+  {
+    category:"Baso Aci",
+    items:[
+      ["Ayam Suir",10000],
+      ["Tetelan",10000],
+      ["Urat",12000],
+      ["Original",6000],
+    ]
+  },
+
+  {
+    category:"Menu Lainnya",
+    items:[
+      ["Basreng Bojot",5000],
+      ["Otak-Otak Bojot",5000],
+      ["Cireng Isi",2000],
+      ["Cireng Kuah Keju Creamy",10000],
+      ["Aneka ES",2000],
+      ["Pop Ice",3000],
+      ["Good Day Freeze",5000],
+    ]
+  }
+];
+
+const menuList = document.getElementById("menu-list");
+
+menus.forEach((menu,menuIndex)=>{
+
+  let html = `
+    <div class="product">
+      <h3>${menu.category}</h3>
+  `;
+
+  menu.items.forEach((item,itemIndex)=>{
+
+    html += `
+      <div class="item">
+        <div>
+          ${item[0]} - Rp ${item[1].toLocaleString("id-ID")}
+        </div>
+
+        <input 
+          type="checkbox"
+          data-name="${menu.category} ${item[0]}"
+          data-price="${item[1]}"
+          onchange="updateTotal()"
+        >
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  menuList.innerHTML += html;
+
+});
+
+function updateTotal(){
+
+  let total = 0;
+
+  document.querySelectorAll("input[type=checkbox]:checked")
+  .forEach(item=>{
+    total += Number(item.dataset.price);
+  });
+
+  document.getElementById("total").innerText =
+    total.toLocaleString("id-ID");
+}
+
+function checkoutWA(){
+
+  let selected = document.querySelectorAll("input[type=checkbox]:checked");
+
+  if(selected.length === 0){
+    alert("Silahkan pilih menu dulu.");
+    return;
+  }
+
+  let message = "Halo kak, saya mau pesan:%0A%0A";
+
+  let total = 0;
+
+  selected.forEach((item,index)=>{
+
+    const name = item.dataset.name;
+    const price = Number(item.dataset.price);
+
+    total += price;
+
+    message += `${index+1}. ${name} - Rp ${price.toLocaleString("id-ID")}%0A`;
+  });
+
+  message += `%0A--------------------%0A`;
+  message += `TOTAL : Rp ${total.toLocaleString("id-ID")}%0A`;
+  message += `--------------------%0A`;
+  message += `Terima kasih kak 🙏`;
+
+  window.open(
+    `https://wa.me/${phoneNumber}?text=${message}`,
+    "_blank"
+  );
+}
+
+</script>
+
+</body>
+</html>
