@@ -3,387 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OKTSHOP17 - Pesan Cemilan</title>
+  <title>OKTSHOP17 POS - Kasir Cemilan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Library untuk PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
   <style>
-    body{
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background:#fff8f0;
-      margin:0;
-      padding:0;
+    :root {
+      --pos-bg: #f3f4f6;
+      --pos-primary: #3b82f6; 
+      --pos-sidebar: #ffffff;
+      --text-main: #1f2937;
+      --admin-color: #6366f1;
     }
 
-    header{
-      background:#ff5722;
-      color:white;
-      padding:20px;
-      text-align:center;
-      font-size:24px;
-      font-weight:bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    body { font-family: 'Inter', sans-serif; background-color: var(--pos-bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    header {
+      background: #1e293b; color: white; padding: 8px 15px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 10;
     }
 
-    .container{
-      padding:15px;
-      max-width:700px;
-      margin:auto;
+    header h1 { font-size: 14px; margin: 0; }
+    header h1 span { font-size: 11px; font-weight: normal; opacity: 0.8; margin-left: 5px; }
+
+    /* Tombol Admin */
+    .btn-admin-access {
+      background: var(--admin-color); color: white; border: none; padding: 4px 10px;
+      border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold;
     }
 
-    .welcome{
-      background:white;
-      padding:15px;
-      border-radius:12px;
-      margin-bottom:20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-      line-height:1.6;
+    .pos-wrapper { display: flex; flex: 1; overflow: hidden; }
+
+    .menu-section {
+      flex: 1; overflow-y: auto; padding: 10px; display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; align-content: start;
     }
 
-    .product{
-      background:white;
-      margin-bottom:15px;
-      padding:15px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    .category-title {
+      grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #9ca3af;
+      margin-top: 10px; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;
     }
 
-    .product h3{
-      margin-top:0;
-      color:#ff5722;
-      border-bottom: 2px solid #fff8f0;
-      padding-bottom: 5px;
+    .product-card {
+      background: white; border-radius: 8px; padding: 10px 5px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; border: 1.5px solid transparent;
+      display: flex; flex-direction: column; justify-content: center; transition: 0.1s;
     }
+    .product-card.selected { border-color: var(--pos-primary); background: #eff6ff; }
+    .product-card .name { font-weight: 600; font-size: 11px; margin-bottom: 3px; line-height: 1.2; }
+    .product-card .price { color: var(--pos-primary); font-weight: 700; font-size: 10px; }
 
-    .item{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin:12px 0;
-      border-bottom:1px solid #eee;
-      padding-bottom:12px;
-    }
+    .sidebar-cart { width: 320px; background: var(--pos-sidebar); border-left: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+    .cart-header { padding: 15px; border-bottom: 1px solid #f3f4f6; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 10px 15px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f9fafb; padding-bottom: 5px;}
 
-    .item-info {
-      flex: 1;
-    }
+    .btn-small { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
+    .cart-footer { padding: 15px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
+    .total-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 18px; font-weight: 800; color: var(--pos-primary); }
+    .input-pos { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 6px; font-size: 12px; box-sizing: border-box; }
+    .btn-pay { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--pos-primary); color: white; font-weight: 700; font-size: 14px; cursor: pointer; }
 
-    .item-name {
-      font-weight: bold;
-      display: block;
+    /* MODAL STYLES */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100;
     }
+    .modal-content {
+      background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+    .admin-menu-btn {
+      width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd;
+      border-radius: 8px; background: #f8fafc; cursor: pointer; text-align: left; font-weight: 600;
+    }
+    .admin-menu-btn:hover { background: #e2e8f0; }
 
-    .item-price {
-      color: #666;
-      font-size: 14px;
-    }
-
-    .qty-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-right: 15px;
-    }
-
-    .btn-qty {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid #ff5722;
-      background: white;
-      color: #ff5722;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .qty-input {
-      width: 30px;
-      text-align: center;
-      border: none;
-      font-weight: bold;
-      font-size: 16px;
-      background: transparent;
-    }
-
-    /* Form Styles */
-    .form-group {
-      margin-bottom: 12px;
-    }
-    .form-group label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 14px;
-      color: #333;
-    }
-    .form-group input, .form-group textarea, .form-group select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-family: inherit;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    .checkout{
-      position:sticky;
-      bottom:0;
-      background:white;
-      padding:15px;
-      box-shadow:0 -5px 15px rgba(0,0,0,0.1);
-      margin-top:20px;
-    }
-
-    .total{
-      font-size:22px;
-      font-weight:bold;
-      margin-bottom:10px;
-      color:#ff5722;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    button.btn-order {
-      width:100%;
-      padding:15px;
-      border:none;
-      border-radius:10px;
-      background:#25D366;
-      color:white;
-      font-size:18px;
-      font-weight:bold;
-      cursor:pointer;
-      transition: 0.3s;
-    }
-
-    button.btn-order:hover{
-      background: #1eb954;
-    }
-
-    input[type="checkbox"]{
-      width:24px;
-      height:24px;
-      cursor: pointer;
-      accent-color: #ff5722;
+    @media (max-width: 850px) {
+      .pos-wrapper { flex-direction: column; overflow-y: auto; }
+      .sidebar-cart { width: 100%; border-left: none; height: auto; }
+      body { overflow-y: auto; height: auto; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  OKTSHOP17 - Pesan Cemilan
+  <h1>OKTSHOP17 <span>| selamat datang, silahkan klik menu pilihan kamu</span></h1>
+  <button class="btn-admin-access" onclick="openLogin()">⚙️ Pengaturan Untuk akses admin</button>
 </header>
 
-<div class="container">
-  <div class="welcome">
-    <b>Halo kak, mau pilih cemilan apa kak? 🤗</b><br>
-    Silahkan tentukan jumlah (qty) dan centang barang yang ingin dipesan.
-  </div>
+<div class="pos-wrapper">
+  <div class="menu-section" id="menu-grid"></div>
 
-  <!-- Daftar Menu -->
-  <div id="menu-list"></div>
-
-  <!-- Form Data Pengiriman -->
-  <div class="product">
-    <h3>Detail Pengiriman & Pembayaran</h3>
-    
-    <div class="form-group">
-      <label>Nama Penerima:</label>
-      <input type="text" id="buyer_name" placeholder="Masukkan nama Anda">
+  <div class="sidebar-cart">
+    <div class="cart-header"><h2>🛒 Keranjang</h2></div>
+    <div class="cart-items" id="cart-list">
+      <div style="text-align: center; color: #9ca3af; margin-top: 30px; font-size: 12px;">Pilih menu di kiri</div>
     </div>
-
-    <div class="form-group">
-      <label>No. Penerima (WhatsApp):</label>
-      <input type="tel" id="buyer_phone" placeholder="Contoh: 08123456789">
-    </div>
-
-    <div class="form-group">
-      <label>Alamat Kirim:</label>
-      <textarea id="buyer_address" placeholder="Tulis alamat lengkap (Jalan, No. Rumah, Patokan)"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Metode Pembayaran:</label>
-      <select id="payment_method">
-        <option value="Transfer / QRIS">Transfer / QRIS</option>
-        <option value="Cash / COD">Cash / COD</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Kirim Pakai:</label>
-      <select id="delivery_method">
-        <option value="COD">COD</option>
-        <option value="MAXIM">MAXIM</option>
-      </select>
+    <div class="cart-footer">
+      <div class="total-row"><span>TOTAL</span><span id="total-val">Rp 0</span></div>
+      <input type="text" id="buyer_name" class="input-pos" placeholder="Nama Anda">
+      <input type="tel" id="buyer_phone" class="input-pos" placeholder="No. WhatsApp">
+      <textarea id="buyer_address" class="input-pos" placeholder="Alamat Pengiriman" rows="2"></textarea>
+      <div style="display:flex; gap:5px;">
+        <select id="payment_method" class="input-pos"><option value="Transfer">Transfer</option><option value="COD">COD</option></select>
+        <select id="delivery_method" class="input-pos"><option value="COD">COD</option><option value="MAXIM">MAXIM</option></select>
+      </div>
+      <button class="btn-pay" onclick="checkoutWA()">PESAN SEKARANG</button>
     </div>
   </div>
+</div>
 
-  <div class="checkout">
-    <div class="total">
-      <span>Total Bayar:</span>
-      <span>Rp <span id="total">0</span></span>
-    </div>
+<!-- Modal Login Admin -->
+<div id="modalLogin" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">Login Admin <span onclick="closeModal('modalLogin')" style="cursor:pointer">×</span></div>
+    <input type="text" id="admin_user" class="input-pos" placeholder="ID User">
+    <input type="password" id="admin_pass" class="input-pos" placeholder="Password">
+    <button class="btn-pay" style="background:var(--admin-color)" onclick="handleLogin()">Masuk</button>
+  </div>
+</div>
 
-    <button class="btn-order" onclick="checkoutWA()">
-      Pesan via WhatsApp
-    </button>
+<!-- Modal Panel Admin -->
+<div id="modalAdmin" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">Panel Admin OKTSHOP17 <span onclick="closeModal('modalAdmin')" style="cursor:pointer">×</span></div>
+    <button class="admin-menu-btn" onclick="rekapPerItem()">📊 Rekap Penjualan Per Item (Hari Ini)</button>
+    <button class="admin-menu-btn" onclick="downloadBulananPDF()">📅 Download Laporan Bulanan (PDF)</button>
+    <button class="admin-menu-btn" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca" onclick="clearData()">🗑️ Hapus Semua Data Transaksi</button>
   </div>
 </div>
 
 <script>
-const phoneNumber = "62895345452412"; 
-
+const phoneNumber = "62895345452412";
 const menus = [
-  {
-    category:"Keripik Kaca",
-    items:[
-      ["1Kg",70000], ["500gr",36000], ["250gr",22000], ["100gr",10000], ["125gr",12000]
-    ]
-  },
-  {
-    category:"Usus Crispy",
-    items:[
-      ["1Kg",105000], ["500gr",55000], ["250gr",28000], ["100gr",13000]
-    ]
-  },
-  {
-    category:"Basreng Stik",
-    items:[
-      ["1Kg",75000], ["500gr",45000], ["250gr",23000], ["125gr",13000]
-    ]
-  },
-  {
-    category:"Baso Aci",
-    items:[
-      ["Ayam Suir",10000], ["Tetelan",10000], ["Urat",12000], ["Original",6000]
-    ]
-  },
-  {
-    category:"Menu Lainnya",
-    items:[
-      ["Basreng Bojot",5000], ["Otak-Otak Bojot",5000], ["Cireng Isi",2000],
-      ["Cireng Kuah Keju Creamy",10000], ["Aneka ES",2000], ["Pop Ice",3000], ["Good Day Freeze",5000]
-    ]
-  }
+  { category:"Keripik Kaca", items:[ ["1Kg",70000], ["500gr",36000], ["250gr",22000], ["125gr",12000], ["100gr",10000] ] },
+  { category:"Usus Crispy", items:[ ["1Kg",105000], ["500gr",55000], ["250gr",28000], ["100gr",13000] ] },
+  { category:"Basreng Stik", items:[ ["1Kg",75000], ["500gr",45000], ["250gr",23000], ["125gr",13000] ] },
+  { category:"Baso Aci", items:[ ["Ayam Suir",10000], ["Tetelan",10000], ["Urat",12000], ["Original",6000] ] },
+  { category:"Lainnya", items:[ ["Basreng Bojot",5000], ["Otak-Otak Bojot",5000], ["Cireng Isi",2000], ["Cireng Kuah Keju",10000], ["Pop Ice",3000] ] }
 ];
 
-const menuList = document.getElementById("menu-list");
+let cart = {};
+const menuGrid = document.getElementById("menu-grid");
 
-// Render Menu
-menus.forEach((menu, mIdx) => {
-  let html = `<div class="product"><h3>${menu.category}</h3>`;
-  menu.items.forEach((item, iIdx) => {
-    const itemId = `item_${mIdx}_${iIdx}`;
-    html += `
-      <div class="item">
-        <div class="item-info">
-          <span class="item-name">${item[0]}</span>
-          <span class="item-price">Rp ${item[1].toLocaleString("id-ID")}</span>
-        </div>
-        
-        <div class="qty-control">
-          <button class="btn-qty" onclick="changeQty('${itemId}', -1)">-</button>
-          <input type="text" class="qty-input" id="qty-${itemId}" value="1" readonly>
-          <button class="btn-qty" onclick="changeQty('${itemId}', 1)">+</button>
-        </div>
+// Inisialisasi Data Storage
+if(!localStorage.getItem('okt_sales')) localStorage.setItem('okt_sales', JSON.stringify([]));
 
-        <input 
-          type="checkbox" 
-          id="check-${itemId}" 
-          class="item-checkbox"
-          data-name="${menu.category} ${item[0]}" 
-          data-price="${item[1]}" 
-          data-id="${itemId}"
-          onchange="updateTotal()"
-        >
-      </div>
-    `;
+menus.forEach((cat) => {
+  const catTitle = document.createElement("div");
+  catTitle.className = "category-title";
+  catTitle.innerText = cat.category;
+  menuGrid.appendChild(catTitle);
+  cat.items.forEach((item) => {
+    const itemId = `${cat.category}-${item[0]}`.replace(/\s+/g, '-');
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.id = `card-${itemId}`;
+    card.onclick = () => addToCart(itemId, cat.category + " " + item[0], item[1]);
+    card.innerHTML = `<span class="name">${item[0]}</span><span class="price">Rp ${item[1].toLocaleString("id-ID")}</span>`;
+    menuGrid.appendChild(card);
   });
-  html += `</div>`;
-  menuList.innerHTML += html;
 });
 
-function changeQty(id, delta) {
-  const input = document.getElementById(`qty-${id}`);
-  const checkbox = document.getElementById(`check-${id}`);
-  let val = parseInt(input.value) + delta;
-  
-  if (val < 1) val = 1;
-  input.value = val;
-
-  checkbox.checked = true;
-  updateTotal();
+function addToCart(id, name, price) {
+  if (cart[id]) { cart[id].qty += 1; } 
+  else { cart[id] = { name: name, price: price, qty: 1 }; document.getElementById(`card-${id}`).classList.add("selected"); }
+  updateCartUI();
 }
 
-function updateTotal() {
+function changeQty(id, delta) {
+  if (cart[id]) {
+    cart[id].qty += delta;
+    if (cart[id].qty <= 0) { delete cart[id]; document.getElementById(`card-${id}`).classList.remove("selected"); }
+    updateCartUI();
+  }
+}
+
+function updateCartUI() {
+  const cartList = document.getElementById("cart-list");
+  cartList.innerHTML = "";
   let total = 0;
-  document.querySelectorAll(".item-checkbox:checked").forEach(cb => {
-    const id = cb.dataset.id;
-    const price = parseInt(cb.dataset.price);
-    const qty = parseInt(document.getElementById(`qty-${id}`).value);
-    total += (price * qty);
+  Object.keys(cart).forEach(id => {
+    const item = cart[id];
+    total += (item.price * item.qty);
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `<div style="flex:1"><span class="cart-item-name">${item.name}</span><span class="cart-item-sub">Rp ${item.price.toLocaleString("id-ID")}</span></div>
+      <div style="display:flex; align-items:center; gap:5px;"><button class="btn-small" onclick="changeQty('${id}', -1)">-</button>
+      <span style="font-size:12px; font-weight:bold;">${item.qty}</span><button class="btn-small" onclick="changeQty('${id}', 1)">+</button></div>`;
+    cartList.appendChild(div);
   });
-  document.getElementById("total").innerText = total.toLocaleString("id-ID");
+  document.getElementById("total-val").innerText = `Rp ${total.toLocaleString("id-ID")}`;
+}
+
+// SIMPAN TRANSAKSI
+function saveTransaction() {
+  const sales = JSON.parse(localStorage.getItem('okt_sales'));
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  
+  Object.values(cart).forEach(item => {
+    sales.push({
+      date: dateStr,
+      name: item.name,
+      qty: item.qty,
+      price: item.price,
+      total: item.price * item.qty
+    });
+  });
+  localStorage.setItem('okt_sales', JSON.stringify(sales));
 }
 
 function checkoutWA() {
-  const selected = document.querySelectorAll(".item-checkbox:checked");
-  
-  // Ambil data form
+  if (Object.keys(cart).length === 0) { alert("Pilih menu!"); return; }
   const name = document.getElementById("buyer_name").value;
-  const phone = document.getElementById("buyer_phone").value;
-  const address = document.getElementById("buyer_address").value;
-  const payment = document.getElementById("payment_method").value;
-  const delivery = document.getElementById("delivery_method").value;
+  if (!name) { alert("Isi nama pelanggan!"); return; }
 
-  if (selected.length === 0) {
-    alert("Pilih minimal satu cemilan dulu ya kak.");
-    return;
-  }
+  // Simpan ke database lokal untuk admin
+  saveTransaction();
 
-  if (!name || !phone || !address) {
-    alert("Harap lengkapi data penerima dan alamat ya kak.");
-    return;
-  }
-
-  let message = "*PESANAN CEMILAN - OKTSHOP17*\n";
-  message += "--------------------------------------\n";
-  
+  let msg = "*PESANAN OKTSHOP17*\n----------------\n";
   let grandTotal = 0;
-  selected.forEach((cb, index) => {
-    const id = cb.dataset.id;
-    const itemName = cb.dataset.name;
-    const price = parseInt(cb.dataset.price);
-    const qty = parseInt(document.getElementById(`qty-${id}`).value);
-    const subtotal = price * qty;
-    grandTotal += subtotal;
+  Object.values(cart).forEach((item) => {
+    const sub = item.price * item.qty;
+    grandTotal += sub;
+    msg += `• ${item.name} (${item.qty}x) = Rp ${sub.toLocaleString("id-ID")}\n`;
+  });
+  msg += `----------------\n*TOTAL: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n*Penerima:* ${name}`;
+  
+  window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+}
 
-    message += `${index + 1}. *${itemName}*\n`;
-    message += `   ${qty} x Rp ${price.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}\n`;
+// FUNGSI ADMIN
+function openLogin() { document.getElementById('modalLogin').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function handleLogin() {
+  const user = document.getElementById('admin_user').value;
+  const pass = document.getElementById('admin_pass').value;
+  if(user === "Admin_oktshop17" && pass === "Oktshop17") {
+    closeModal('modalLogin');
+    document.getElementById('modalAdmin').style.display = 'flex';
+  } else {
+    alert("ID User atau Password Salah!");
+  }
+}
+
+function rekapPerItem() {
+  const sales = JSON.parse(localStorage.getItem('okt_sales'));
+  const today = new Date().toISOString().split('T')[0];
+  const todaySales = sales.filter(s => s.date === today);
+
+  if(todaySales.length === 0) return alert("Belum ada penjualan hari ini.");
+
+  const summary = {};
+  todaySales.forEach(s => {
+    summary[s.name] = (summary[s.name] || 0) + s.qty;
   });
 
-  message += "--------------------------------------\n";
-  message += `*TOTAL BAYAR: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n`;
-  
-  message += `*DETAIL PENERIMA:*\n`;
-  message += `👤 Nama: ${name}\n`;
-  message += `📞 No. HP: ${phone}\n`;
-  message += `📍 Alamat: ${address}\n\n`;
-  
-  message += `*METODE PESANAN:*\n`;
-  message += `💳 Bayar via: ${payment}\n`;
-  message += `🚚 Kirim pakai: ${delivery}\n`;
+  let text = `REKAP ITEM HARI INI (${today}):\n`;
+  for (const [name, qty] of Object.entries(summary)) {
+    text += `- ${name}: ${qty} pcs\n`;
+  }
+  alert(text);
+}
 
-  const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-  window.open(url, "_blank");
+function downloadBulananPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const sales = JSON.parse(localStorage.getItem('okt_sales'));
+  
+  if(sales.length === 0) return alert("Data transaksi kosong.");
+
+  // Grouping per hari
+  const dailyTotal = {};
+  sales.forEach(s => {
+    dailyTotal[s.date] = (dailyTotal[s.date] || 0) + s.total;
+  });
+
+  const tableData = Object.entries(dailyTotal).map(([date, total]) => [date, `Rp ${total.toLocaleString("id-ID")}`]);
+
+  doc.text("LAPORAN PENJUALAN BULANAN - OKTSHOP17", 14, 15);
+  doc.autoTable({
+    head: [['Tanggal', 'Total Jualan']],
+    body: tableData,
+    startY: 25
+  });
+
+  doc.save(`Laporan_OKTSHOP17_${new Date().getMonth()+1}.pdf`);
+}
+
+function clearData() {
+  if(confirm("Yakin ingin menghapus semua history penjualan?")) {
+    localStorage.setItem('okt_sales', JSON.stringify([]));
+    alert("Data berhasil dibersihkan.");
+  }
 }
 </script>
-
 </body>
 </html>
