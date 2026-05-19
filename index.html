@@ -11,98 +11,163 @@
 
   <style>
     :root {
-      --pos-bg: #f3f4f6;
+      --pos-bg: #f8fafc;
       --pos-primary: #3b82f6; 
+      --pos-accent: #6366f1;
       --pos-sidebar: #ffffff;
-      --text-main: #1f2937;
-      --admin-color: #6366f1;
+      --text-main: #1e293b;
+      --admin-color: #4f46e5;
     }
 
-    body { font-family: 'Inter', sans-serif; background-color: var(--pos-bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--pos-bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
 
+    /* HEADER STYLE IMPROVED */
     header {
-      background: #1e293b; color: white; padding: 8px 15px;
-      display: flex; justify-content: space-between; align-items: center; z-index: 10;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white; padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center; 
+      z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+    .brand-logo { display: flex; align-items: center; gap: 10px; }
+    .brand-logo .logo-circle { width: 35px; height: 35px; background: var(--pos-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+    .header-info h1 { font-size: 16px; margin: 0; letter-spacing: 0.5px; }
+    .header-info p { font-size: 11px; margin: 0; opacity: 0.7; }
 
-    header h1 { font-size: 14px; margin: 0; }
-    header h1 span { font-size: 11px; font-weight: normal; opacity: 0.8; margin-left: 5px; }
-
-    /* Tombol Admin */
     .btn-admin-access {
-      background: var(--admin-color); color: white; border: none; padding: 4px 10px;
-      border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold;
+      background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); 
+      padding: 8px 15px; border-radius: 8px; font-size: 11px; cursor: pointer; 
+      font-weight: 600; transition: 0.3s; backdrop-filter: blur(5px);
     }
+    .btn-admin-access:hover { background: var(--admin-color); border-color: var(--admin-color); }
+
+    /* BANNER SLIDER */
+    .banner-container {
+      width: 100%; height: 160px; overflow: hidden; position: relative; background: #e2e8f0;
+    }
+    .banner-wrapper {
+      display: flex; width: 300%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .banner-slide {
+      width: 100%; height: 100%; position: relative;
+      background-size: cover; background-position: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .banner-content {
+      background: rgba(0,0,0,0.4); color: white; padding: 15px 25px; border-radius: 10px;
+      text-align: center; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);
+    }
+    .banner-content h2 { margin: 0; font-size: 20px; text-transform: uppercase; }
+    .banner-content p { margin: 5px 0 0; font-size: 13px; opacity: 0.9; }
 
     .pos-wrapper { display: flex; flex: 1; overflow: hidden; }
 
     .menu-section {
-      flex: 1; overflow-y: auto; padding: 10px; display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; align-content: start;
+      flex: 1; overflow-y: auto; padding: 15px; display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; align-content: start;
     }
 
     .category-title {
-      grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #9ca3af;
-      margin-top: 10px; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;
+      grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: #64748b;
+      margin-top: 15px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;
     }
 
     .product-card {
-      background: white; border-radius: 8px; padding: 10px 5px; text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; border: 1.5px solid transparent;
-      display: flex; flex-direction: column; justify-content: center; transition: 0.1s;
+      background: white; border-radius: 12px; padding: 12px 8px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; border: 2px solid transparent;
+      transition: 0.2s; position: relative;
     }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .product-card.selected { border-color: var(--pos-primary); background: #eff6ff; }
-    .product-card .name { font-weight: 600; font-size: 11px; margin-bottom: 3px; line-height: 1.2; }
-    .product-card .price { color: var(--pos-primary); font-weight: 700; font-size: 10px; }
+    .product-card .name { font-weight: 600; font-size: 12px; margin-bottom: 5px; display: block; height: 30px; overflow: hidden; }
+    .product-card .price { color: var(--pos-primary); font-weight: 700; font-size: 11px; background: #f0f7ff; padding: 2px 6px; border-radius: 4px; }
 
-    .sidebar-cart { width: 320px; background: var(--pos-sidebar); border-left: 1px solid #e5e7eb; display: flex; flex-direction: column; }
-    .cart-header { padding: 15px; border-bottom: 1px solid #f3f4f6; }
-    .cart-items { flex: 1; overflow-y: auto; padding: 10px 15px; }
-    .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f9fafb; padding-bottom: 5px;}
+    .sidebar-cart { width: 340px; background: var(--pos-sidebar); border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+    .cart-header { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; font-weight: bold; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f8fafc; }
 
-    .btn-small { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
-    .cart-footer { padding: 15px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
-    .total-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 18px; font-weight: 800; color: var(--pos-primary); }
-    .input-pos { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 6px; font-size: 12px; box-sizing: border-box; }
-    .btn-pay { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--pos-primary); color: white; font-weight: 700; font-size: 14px; cursor: pointer; }
+    .btn-small { width: 26px; height: 26px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .cart-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    .total-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 20px; font-weight: 800; color: var(--pos-primary); }
+    
+    .input-pos { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 8px; font-size: 13px; box-sizing: border-box; }
+    .btn-pay { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--pos-primary); color: white; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
+    .btn-pay:hover { background: #2563eb; }
 
-    /* MODAL STYLES */
+    /* MODAL */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100;
+      background: rgba(15, 23, 42, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px);
     }
     .modal-content {
-      background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 500px;
+      max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
-    .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+    .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .admin-menu-btn {
-      width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd;
-      border-radius: 8px; background: #f8fafc; cursor: pointer; text-align: left; font-weight: 600;
+      width: 100%; padding: 12px 15px; margin-bottom: 10px; border: 1px solid #e2e8f0;
+      border-radius: 10px; background: #fff; cursor: pointer; text-align: left; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: 0.2s;
     }
-    .admin-menu-btn:hover { background: #e2e8f0; }
+    .admin-menu-btn:hover { background: #f1f5f9; border-color: var(--pos-primary); }
+
+    .banner-edit-group { border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-bottom: 10px; background: #f8fafc; }
+    .banner-edit-group label { font-size: 11px; font-weight: bold; color: #64748b; }
 
     @media (max-width: 850px) {
       .pos-wrapper { flex-direction: column; overflow-y: auto; }
       .sidebar-cart { width: 100%; border-left: none; height: auto; }
       body { overflow-y: auto; height: auto; }
+      .banner-container { height: 120px; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>OKTSHOP17 <span>| selamat datang, silahkan klik menu pilihan kamu</span></h1>
-  <button class="btn-admin-access" onclick="openLogin()">⚙️ Pengaturan Untuk akses admin</button>
+  <div class="brand-logo">
+    <div class="logo-circle">O</div>
+    <div class="header-info">
+      <h1>OKTSHOP17 POS</h1>
+      <p>Sistem Kasir Cemilan Digital</p>
+    </div>
+  </div>
+  <button class="btn-admin-access" onclick="openLogin()">⚙️ Panel Admin</button>
 </header>
+
+<!-- Banner Slider -->
+<div class="banner-container">
+  <div class="banner-wrapper" id="banner-wrapper">
+    <!-- Slide 1 -->
+    <div class="banner-slide" id="slide-0" style="background-image: url('https://images.unsplash.com/photo-1599490659213-e2b9527bb087?auto=format&fit=crop&w=1000&q=80')">
+      <div class="banner-content">
+        <h2 id="slide-title-0">Keripik Kaca Original</h2>
+        <p id="slide-desc-0">Renyah, Tipis, dan Pedas Mantap!</p>
+      </div>
+    </div>
+    <!-- Slide 2 -->
+    <div class="banner-slide" id="slide-1" style="background-image: url('https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=1000&q=80')">
+      <div class="banner-content">
+        <h2 id="slide-title-1">Baso Aci Garut</h2>
+        <p id="slide-desc-1">Kuah Segar dengan Isian Melimpah</p>
+      </div>
+    </div>
+    <!-- Slide 3 -->
+    <div class="banner-slide" id="slide-2" style="background-image: url('https://images.unsplash.com/photo-1541592106381-b31e922f40c5?auto=format&fit=crop&w=1000&q=80')">
+      <div class="banner-content">
+        <h2 id="slide-title-2">Usus Crispy</h2>
+        <p id="slide-desc-2">Cemilan Wajib Setiap Hari!</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="pos-wrapper">
   <div class="menu-section" id="menu-grid"></div>
 
   <div class="sidebar-cart">
-    <div class="cart-header"><h2>🛒 Keranjang</h2></div>
+    <div class="cart-header">🛒 Keranjang Belanja</div>
     <div class="cart-items" id="cart-list">
-      <div style="text-align: center; color: #9ca3af; margin-top: 30px; font-size: 12px;">Pilih menu di kiri</div>
+      <div style="text-align: center; color: #9ca3af; margin-top: 30px; font-size: 12px;">Pilih menu untuk memesan</div>
     </div>
     <div class="cart-footer">
       <div class="total-row"><span>TOTAL</span><span id="total-val">Rp 0</span></div>
@@ -132,9 +197,18 @@
 <div id="modalAdmin" class="modal-overlay">
   <div class="modal-content">
     <div class="modal-header">Panel Admin OKTSHOP17 <span onclick="closeModal('modalAdmin')" style="cursor:pointer">×</span></div>
-    <button class="admin-menu-btn" onclick="rekapPerItem()">📊 Rekap Penjualan Per Item (Hari Ini)</button>
-    <button class="admin-menu-btn" onclick="downloadBulananPDF()">📅 Download Laporan Bulanan (PDF)</button>
-    <button class="admin-menu-btn" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca" onclick="clearData()">🗑️ Hapus Semua Data Transaksi</button>
+    <button class="admin-menu-btn" onclick="rekapPerItem()">📊 Rekap Penjualan Per Item</button>
+    <button class="admin-menu-btn" onclick="downloadBulananPDF()">📅 Download Laporan PDF</button>
+    <button class="admin-menu-btn" onclick="toggleBannerEditor()">🖼️ Atur Banner Promo</button>
+    
+    <!-- Banner Editor Section (Hidden by Default) -->
+    <div id="banner-editor" style="display:none; margin-top:15px; border-top:2px solid #eee; pt:15px;">
+      <p style="font-weight:bold; font-size:12px;">Update Konten Banner (3 Slide)</p>
+      <div id="editor-container"></div>
+      <button class="btn-pay" onclick="saveBannerSettings()">Simpan Perubahan Banner</button>
+    </div>
+
+    <button class="admin-menu-btn" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; margin-top:20px;" onclick="clearData()">🗑️ Hapus Semua History</button>
   </div>
 </div>
 
@@ -148,12 +222,21 @@ const menus = [
   { category:"Lainnya", items:[ ["Basreng Bojot",5000], ["Otak-Otak Bojot",5000], ["Cireng Isi",2000], ["Cireng Kuah Keju",10000], ["Pop Ice",3000] ] }
 ];
 
+// Banner Data Defaults
+let bannerData = JSON.parse(localStorage.getItem('okt_banners')) || [
+  { title: "Keripik Kaca Original", desc: "Renyah, Tipis, dan Pedas Mantap!", img: "https://images.unsplash.com/photo-1599490659213-e2b9527bb087?auto=format&fit=crop&w=1000&q=80" },
+  { title: "Baso Aci Garut", desc: "Kuah Segar dengan Isian Melimpah", img: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=1000&q=80" },
+  { title: "Usus Crispy", desc: "Cemilan Wajib Setiap Hari!", img: "https://images.unsplash.com/photo-1541592106381-b31e922f40c5?auto=format&fit=crop&w=1000&q=80" }
+];
+
 let cart = {};
+let currentSlide = 0;
 const menuGrid = document.getElementById("menu-grid");
 
-// Inisialisasi Data Storage
+// Initialize Storage
 if(!localStorage.getItem('okt_sales')) localStorage.setItem('okt_sales', JSON.stringify([]));
 
+// Render Menu
 menus.forEach((cat) => {
   const catTitle = document.createElement("div");
   catTitle.className = "category-title";
@@ -170,6 +253,23 @@ menus.forEach((cat) => {
   });
 });
 
+// Banner Logic
+function applyBannerData() {
+  bannerData.forEach((data, i) => {
+    document.getElementById(`slide-${i}`).style.backgroundImage = `url('${data.img}')`;
+    document.getElementById(`slide-title-${i}`).innerText = data.title;
+    document.getElementById(`slide-desc-${i}`).innerText = data.desc;
+  });
+}
+
+function startBannerAutoPlay() {
+  setInterval(() => {
+    currentSlide = (currentSlide + 1) % 3;
+    document.getElementById('banner-wrapper').style.transform = `translateX(-${currentSlide * 33.333}%)`;
+  }, 5000);
+}
+
+// Cart Functions
 function addToCart(id, name, price) {
   if (cart[id]) { cart[id].qty += 1; } 
   else { cart[id] = { name: name, price: price, qty: 1 }; document.getElementById(`card-${id}`).classList.add("selected"); }
@@ -193,117 +293,115 @@ function updateCartUI() {
     total += (item.price * item.qty);
     const div = document.createElement("div");
     div.className = "cart-item";
-    div.innerHTML = `<div style="flex:1"><span class="cart-item-name">${item.name}</span><span class="cart-item-sub">Rp ${item.price.toLocaleString("id-ID")}</span></div>
-      <div style="display:flex; align-items:center; gap:5px;"><button class="btn-small" onclick="changeQty('${id}', -1)">-</button>
-      <span style="font-size:12px; font-weight:bold;">${item.qty}</span><button class="btn-small" onclick="changeQty('${id}', 1)">+</button></div>`;
+    div.innerHTML = `<div style="flex:1"><div style="font-size:12px; font-weight:600;">${item.name}</div><div style="font-size:10px; color:var(--pos-primary)">Rp ${item.price.toLocaleString("id-ID")}</div></div>
+      <div style="display:flex; align-items:center; gap:8px;"><button class="btn-small" onclick="changeQty('${id}', -1)">-</button>
+      <span style="font-size:13px; font-weight:bold; min-width:15px; text-align:center;">${item.qty}</span><button class="btn-small" onclick="changeQty('${id}', 1)">+</button></div>`;
     cartList.appendChild(div);
   });
   document.getElementById("total-val").innerText = `Rp ${total.toLocaleString("id-ID")}`;
 }
 
-// SIMPAN TRANSAKSI
-function saveTransaction() {
-  const sales = JSON.parse(localStorage.getItem('okt_sales'));
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  
-  Object.values(cart).forEach(item => {
-    sales.push({
-      date: dateStr,
-      name: item.name,
-      qty: item.qty,
-      price: item.price,
-      total: item.price * item.qty
-    });
-  });
-  localStorage.setItem('okt_sales', JSON.stringify(sales));
-}
-
+// Checkout
 function checkoutWA() {
-  if (Object.keys(cart).length === 0) { alert("Pilih menu!"); return; }
+  if (Object.keys(cart).length === 0) { alert("Pilih menu dulu!"); return; }
   const name = document.getElementById("buyer_name").value;
   if (!name) { alert("Isi nama pelanggan!"); return; }
 
-  // Simpan ke database lokal untuk admin
-  saveTransaction();
-
+  const sales = JSON.parse(localStorage.getItem('okt_sales'));
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  
   let msg = "*PESANAN OKTSHOP17*\n----------------\n";
   let grandTotal = 0;
+  
   Object.values(cart).forEach((item) => {
     const sub = item.price * item.qty;
     grandTotal += sub;
     msg += `• ${item.name} (${item.qty}x) = Rp ${sub.toLocaleString("id-ID")}\n`;
+    sales.push({ date: dateStr, name: item.name, qty: item.qty, price: item.price, total: sub });
   });
-  msg += `----------------\n*TOTAL: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n*Penerima:* ${name}`;
+
+  localStorage.setItem('okt_sales', JSON.stringify(sales));
+  
+  msg += `----------------\n*TOTAL: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n*Penerima:* ${name}\n*Metode:* ${document.getElementById("payment_method").value} / ${document.getElementById("delivery_method").value}`;
   
   window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
-// FUNGSI ADMIN
+// Admin Functions
 function openLogin() { document.getElementById('modalLogin').style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 function handleLogin() {
-  const user = document.getElementById('admin_user').value;
-  const pass = document.getElementById('admin_pass').value;
-  if(user === "Admin_oktshop17" && pass === "Oktshop17") {
+  if(document.getElementById('admin_user').value === "Admin_oktshop17" && document.getElementById('admin_pass').value === "Oktshop17") {
     closeModal('modalLogin');
     document.getElementById('modalAdmin').style.display = 'flex';
-  } else {
-    alert("ID User atau Password Salah!");
+    renderBannerEditor();
+  } else { alert("Login Salah!"); }
+}
+
+// Banner Editor
+function toggleBannerEditor() {
+  const el = document.getElementById('banner-editor');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderBannerEditor() {
+  const container = document.getElementById('editor-container');
+  container.innerHTML = "";
+  bannerData.forEach((data, i) => {
+    container.innerHTML += `
+      <div class="banner-edit-group">
+        <label>SLIDE ${i+1}</label>
+        <input type="text" id="edit-img-${i}" class="input-pos" value="${data.img}" placeholder="URL Gambar">
+        <input type="text" id="edit-title-${i}" class="input-pos" value="${data.title}" placeholder="Judul Promo">
+        <input type="text" id="edit-desc-${i}" class="input-pos" value="${data.desc}" placeholder="Deskripsi Singkat">
+      </div>
+    `;
+  });
+}
+
+function saveBannerSettings() {
+  for(let i=0; i<3; i++) {
+    bannerData[i].img = document.getElementById(`edit-img-${i}`).value;
+    bannerData[i].title = document.getElementById(`edit-title-${i}`).value;
+    bannerData[i].desc = document.getElementById(`edit-desc-${i}`).value;
   }
+  localStorage.setItem('okt_banners', JSON.stringify(bannerData));
+  applyBannerData();
+  alert("Banner Berhasil Diupdate!");
 }
 
 function rekapPerItem() {
   const sales = JSON.parse(localStorage.getItem('okt_sales'));
   const today = new Date().toISOString().split('T')[0];
-  const todaySales = sales.filter(s => s.date === today);
-
-  if(todaySales.length === 0) return alert("Belum ada penjualan hari ini.");
-
   const summary = {};
-  todaySales.forEach(s => {
-    summary[s.name] = (summary[s.name] || 0) + s.qty;
-  });
-
-  let text = `REKAP ITEM HARI INI (${today}):\n`;
-  for (const [name, qty] of Object.entries(summary)) {
-    text += `- ${name}: ${qty} pcs\n`;
-  }
-  alert(text);
+  sales.filter(s => s.date === today).forEach(s => summary[s.name] = (summary[s.name] || 0) + s.qty);
+  let text = `REKAP ITEM HARI INI:\n`;
+  for (const [name, qty] of Object.entries(summary)) text += `- ${name}: ${qty} pcs\n`;
+  alert(Object.keys(summary).length ? text : "Belum ada penjualan.");
 }
 
 function downloadBulananPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const sales = JSON.parse(localStorage.getItem('okt_sales'));
-  
-  if(sales.length === 0) return alert("Data transaksi kosong.");
-
-  // Grouping per hari
+  if(!sales.length) return alert("Data kosong.");
   const dailyTotal = {};
-  sales.forEach(s => {
-    dailyTotal[s.date] = (dailyTotal[s.date] || 0) + s.total;
-  });
-
+  sales.forEach(s => dailyTotal[s.date] = (dailyTotal[s.date] || 0) + s.total);
   const tableData = Object.entries(dailyTotal).map(([date, total]) => [date, `Rp ${total.toLocaleString("id-ID")}`]);
-
-  doc.text("LAPORAN PENJUALAN BULANAN - OKTSHOP17", 14, 15);
-  doc.autoTable({
-    head: [['Tanggal', 'Total Jualan']],
-    body: tableData,
-    startY: 25
-  });
-
-  doc.save(`Laporan_OKTSHOP17_${new Date().getMonth()+1}.pdf`);
+  doc.text("LAPORAN BULANAN OKTSHOP17", 14, 15);
+  doc.autoTable({ head: [['Tanggal', 'Total']], body: tableData, startY: 25 });
+  doc.save("Laporan_OKTSHOP17.pdf");
 }
 
 function clearData() {
-  if(confirm("Yakin ingin menghapus semua history penjualan?")) {
-    localStorage.setItem('okt_sales', JSON.stringify([]));
-    alert("Data berhasil dibersihkan.");
-  }
+  if(confirm("Hapus semua history?")) { localStorage.setItem('okt_sales', JSON.stringify([])); alert("Data dibersihkan."); }
 }
+
+// Init
+applyBannerData();
+startBannerAutoPlay();
 </script>
 </body>
 </html>
