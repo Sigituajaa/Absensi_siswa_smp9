@@ -106,34 +106,84 @@ function renderStudentList() {
     const search = document.getElementById('search-student').value.toLowerCase();
     list.innerHTML = '';
 
-    students.filter(s => s.name.toLowerCase().includes(search) || s.class.toLowerCase().includes(search))
-        .forEach(s => {
-            const div = document.createElement('div');
-            div.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center";
-            div.innerHTML = `
-            <div class="w-full flex justify-end gap-2 -mb-2">
-                <button onclick="openStudentModal('${s.id}')" class="text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                <button onclick="deleteStudent('${s.id}')" class="text-red-500"><i data-lucide="trash" class="w-4 h-4"></i></button>
-            </div>
-            <div id="qr-${s.id}" class="mb-3 bg-white p-1"></div>
-            <h4 class="font-bold text-slate-800">${s.name}</h4>
-            <p class="text-xs text-slate-500 mb-2">${s.class}</p>
-            <button onclick="downloadQR('${s.id}', '${s.name}')" class="text-xs bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1">
-                <i data-lucide="download" class="w-3 h-3"></i> QR Code
-            </button>
+    const filtered = students.filter(s => s.name.toLowerCase().includes(search) || s.class.toLowerCase().includes(search));
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 text-sm">Belum ada data siswa.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach((s, index) => {
+        const tr = document.createElement('tr');
+        tr.className = "text-sm hover:bg-slate-50";
+        tr.innerHTML = `
+            <td class="p-3 text-slate-400">${index + 1}</td>
+            <td class="p-3 font-medium text-slate-800">${s.name}</td>
+            <td class="p-3 text-slate-500">${s.class}</td>
+            <td class="p-3 text-center">
+                <button onclick="openStudentCard('${s.id}')" class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-100">
+                    Detail
+                </button>
+            </td>
         `;
-            list.appendChild(div);
-            new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 80, height: 80 });
-        });
+        list.appendChild(tr);
+    });
     lucide.createIcons();
 }
 
-function downloadQR(id, name) {
-    const canvas = document.querySelector(`#qr-${id} canvas`);
-    const link = document.createElement('a');
-    link.download = `QR_${name}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+// --- Modal Kartu Siswa (menampilkan QR Code besar) ---
+let currentCardStudentId = null;
+
+function openStudentCard(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+
+    currentCardStudentId = id;
+
+    document.getElementById('card-school-name').innerText = schoolProfile.name;
+    document.getElementById('card-student-name').innerText = s.name;
+    document.getElementById('card-student-class').innerText = s.class;
+    document.getElementById('card-student-id').innerText = `ID: ${s.id}`;
+
+    const qrContainer = document.getElementById('card-qr');
+    qrContainer.innerHTML = '';
+    new QRCode(qrContainer, { text: s.id, width: 180, height: 180 });
+
+    document.getElementById('modal-student-card').classList.remove('hidden');
+}
+
+function closeStudentCardModal() {
+    document.getElementById('modal-student-card').classList.add('hidden');
+    currentCardStudentId = null;
+}
+
+function editFromCard() {
+    if (!currentCardStudentId) return;
+    const id = currentCardStudentId;
+    closeStudentCardModal();
+    openStudentModal(id);
+}
+
+function downloadCardQR() {
+    if (!currentCardStudentId) return;
+    const s = students.find(x => x.id === currentCardStudentId);
+    if (!s) return;
+
+    const cardEl = document.getElementById('student-card-print');
+    if (!cardEl || typeof html2canvas === 'undefined') {
+        Swal.fire('Error', 'Gagal memuat komponen unduh kartu.', 'error');
+        return;
+    }
+
+    html2canvas(cardEl, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Kartu_${s.name}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        console.error('Gagal membuat gambar kartu:', err);
+        Swal.fire('Error', 'Gagal mengunduh kartu siswa.', 'error');
+    });
 }
 
 // --- Scanner Logic ---
