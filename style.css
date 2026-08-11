@@ -21,17 +21,17 @@ body {
     border: none !important;
 }
 
-#reader__dashboard {
-    display: none;
-}
+/* CATATAN: aturan #reader__dashboard { display: none; } SENGAJA DIHAPUS.
+   Aturan itu adalah penyebab utama kamera blank hitam pada versi sebelumnya:
+   ia menyembunyikan tombol "Request Camera Permissions" bawaan html5-qrcode
+   sehingga popup izin kamera tidak pernah terpicu. Sekarang scanner memakai
+   class Html5Qrcode langsung (lihat script.js) yang tidak lagi menghasilkan
+   elemen #reader__dashboard, jadi aturan ini juga sudah tidak diperlukan. */
 
 #reader video {
     border-radius: 1rem;
     width: 100% !important;
-}
-
-#reader__scan_region {
-    min-height: 250px;
+    object-fit: cover;
 }
 
 #reader-placeholder {
