@@ -4,11 +4,11 @@ let classes = JSON.parse(localStorage.getItem('absensi_classes')) || ["X IPA 1",
 let attendanceLogs = JSON.parse(localStorage.getItem('absensi_logs')) || [];
 let schoolProfile = JSON.parse(localStorage.getItem('absensi_school')) || { name: "SMA Harapan Bangsa", address: "Jl. Pendidikan No. 123" };
 
-let html5QrScanner = null;
-let isScannerBusy = false;      // Mencegah start/stop tumpang tindih
-let isProcessingScan = false;   // Mencegah scan yang sama diproses berkali-kali
-let lastSnapshotDataUrl = null; // Foto terakhir hasil snapshot
-let lastLogForPhoto = null;     // Data siswa/log terakhir yang difoto
+let html5Qrcode = null;         // instance kamera aktif (dari class Html5Qrcode, BUKAN Html5QrcodeScanner)
+let isScannerBusy = false;      // mencegah start/stop tumpang tindih
+let isProcessingScan = false;   // mencegah 1 QR yang sama diproses berkali-kali
+let lastSnapshotDataUrl = null; // foto terakhir hasil snapshot
+let lastLogForPhoto = null;     // data siswa/waktu terakhir yang difoto
 
 // --- Initialize App ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,7 +27,6 @@ function showSection(sectionId) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
     document.getElementById(`section-${sectionId}`).classList.remove('hidden');
 
-    // Update Nav UI
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('text-indigo-600', 'active');
         btn.classList.add('text-slate-400');
@@ -138,11 +137,16 @@ function downloadQR(id, name) {
 }
 
 // --- Scanner Logic ---
-// Perbaikan utama:
-// 1. Cek dukungan getUserMedia & tampilkan pesan jelas jika kamera tidak bisa diakses.
-// 2. Pastikan instance scanner lama benar-benar berhenti (await clear()) sebelum membuat yang baru,
-//    supaya tidak terjadi rebutan device kamera yang menyebabkan layar hitam.
-// 3. Tangani error izin kamera (NotAllowedError, NotFoundError, dll) dengan pesan ke user.
+// PERBAIKAN UTAMA:
+// Versi sebelumnya pakai `Html5QrcodeScanner`, yang me-render UI dengan tombol
+// "Request Camera Permissions" di dalam div #reader__dashboard. Popup izin kamera
+// baru muncul SETELAH tombol itu diklik oleh user. Karena CSS punya aturan
+// `#reader__dashboard { display: none; }`, tombol itu jadi tidak kelihatan/tidak
+// bisa diklik, sehingga getUserMedia() tidak pernah terpanggil -> layar hitam terus.
+//
+// Solusinya di sini pakai class `Html5Qrcode` (level lebih rendah) dan memanggil
+// `.start()` secara langsung, sehingga kamera diminta otomatis begitu section
+// scanner dibuka, tanpa butuh tombol tersembunyi apapun.
 async function startScanner() {
     if (isScannerBusy) return;
     isScannerBusy = true;
@@ -151,72 +155,94 @@ async function startScanner() {
     const statusEl = document.getElementById('scanner-status');
     const placeholder = document.getElementById('reader-placeholder');
     if (statusEl) statusEl.innerText = '';
-    if (placeholder) placeholder.innerText = 'Meminta izin kamera...';
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+        placeholder.innerText = 'Meminta izin kamera...';
+    }
 
-    // Cek dukungan browser terhadap akses kamera
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        if (placeholder) placeholder.innerText = 'Browser ini tidak mendukung akses kamera. Gunakan Chrome/Safari versi terbaru dan pastikan situs diakses via HTTPS.';
+        if (placeholder) placeholder.innerText = 'Browser ini tidak mendukung akses kamera. Gunakan Chrome/Safari versi terbaru.';
         isScannerBusy = false;
         return;
     }
 
-    // Pastikan instance scanner sebelumnya benar-benar dibersihkan dulu
+    // Pastikan instance sebelumnya benar-benar berhenti dulu
     await stopScanner();
 
     try {
-        html5QrScanner = new Html5QrcodeScanner("reader", {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true,
-            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-        }, /* verbose= */ false);
+        html5Qrcode = new Html5Qrcode("reader");
 
-        html5QrScanner.render(onScanSuccess, onScanFailure);
+        await html5Qrcode.start(
+            { facingMode: "environment" }, // pakai kamera belakang di HP
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            onScanFailureSilent
+        );
 
-        // Placeholder akan otomatis tertutup oleh video begitu kamera aktif
+        // Kamera berhasil terbuka, sembunyikan placeholder
         if (placeholder) placeholder.style.display = 'none';
     } catch (err) {
-        console.error('Gagal memulai scanner:', err);
+        console.error('Gagal membuka kamera:', err);
+        const message = String(err && err.message ? err.message : err);
+
+        let friendlyMsg = 'Gagal membuka kamera.';
+        if (message.includes('NotAllowedError') || message.includes('Permission')) {
+            friendlyMsg = 'Izin kamera ditolak. Buka pengaturan browser, aktifkan izin kamera untuk situs ini, lalu muat ulang halaman.';
+        } else if (message.includes('NotFoundError')) {
+            friendlyMsg = 'Kamera tidak ditemukan di perangkat ini.';
+        } else if (message.includes('NotReadableError')) {
+            friendlyMsg = 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi kamera/video call lain lalu coba lagi.';
+        } else if (message.includes('OverconstrainedError')) {
+            // Fallback: coba tanpa facingMode kalau device tidak punya kamera belakang
+            try {
+                html5Qrcode = new Html5Qrcode("reader");
+                await html5Qrcode.start(
+                    { facingMode: "user" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess,
+                    onScanFailureSilent
+                );
+                if (placeholder) placeholder.style.display = 'none';
+                isScannerBusy = false;
+                return;
+            } catch (err2) {
+                friendlyMsg = 'Tidak ada kamera yang cocok ditemukan.';
+            }
+        }
+
         if (placeholder) {
             placeholder.style.display = 'flex';
-            placeholder.innerText = 'Gagal membuka kamera. Pastikan izin kamera diaktifkan di browser.';
+            placeholder.innerText = friendlyMsg;
         }
+        if (statusEl) statusEl.innerText = friendlyMsg;
     } finally {
         isScannerBusy = false;
     }
 }
 
-function onScanFailure(error) {
-    // Dipanggil terus-menerus saat tidak ada QR terbaca — ini normal, jangan tampilkan ke user.
-    // Namun kalau errornya soal izin/permission, tampilkan pesan.
-    const msg = (error && error.toString) ? error.toString() : String(error);
-    if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
-        const statusEl = document.getElementById('scanner-status');
-        if (statusEl) statusEl.innerText = 'Izin kamera ditolak. Aktifkan izin kamera di pengaturan browser lalu muat ulang halaman.';
+function onScanFailureSilent() {
+    // Dipanggil terus-menerus tiap frame yang tidak berhasil membaca QR — ini normal,
+    // sengaja dikosongkan supaya tidak spam UI.
+}
+
+async function stopScanner() {
+    if (!html5Qrcode) return;
+    try {
+        const state = html5Qrcode.getState ? html5Qrcode.getState() : null;
+        // Hanya panggil stop() jika scanner memang sedang berjalan
+        if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+            await html5Qrcode.stop();
+        }
+        html5Qrcode.clear();
+    } catch (err) {
+        console.warn('Peringatan saat menghentikan scanner:', err);
+    } finally {
+        html5Qrcode = null;
     }
 }
 
-function stopScanner() {
-    return new Promise((resolve) => {
-        if (html5QrScanner) {
-            html5QrScanner.clear()
-                .then(() => {
-                    html5QrScanner = null;
-                    resolve();
-                })
-                .catch((err) => {
-                    console.warn('Scanner clear warning:', err);
-                    html5QrScanner = null;
-                    resolve();
-                });
-        } else {
-            resolve();
-        }
-    });
-}
-
 function onScanSuccess(decodedText) {
-    if (isProcessingScan) return; // Cegah scan ganda dari frame berikutnya
+    if (isProcessingScan) return; // cegah frame berikutnya memproses ulang
     const student = students.find(s => s.id === decodedText);
 
     if (student) {
@@ -258,7 +284,6 @@ function recordAttendance(student, snapshotDataUrl) {
     const today = new Date().toLocaleDateString('id-ID');
     const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-    // Cek jika sudah absen hari ini
     const already = attendanceLogs.find(l => l.studentId === student.id && l.date === today);
     if (already) {
         Swal.fire('Info', `${student.name} sudah absen hari ini.`, 'info');
@@ -284,7 +309,6 @@ function recordAttendance(student, snapshotDataUrl) {
     if (snapshotDataUrl) {
         openPhotoModal(student, snapshotDataUrl);
     } else {
-        // Fallback jika snapshot gagal diambil (mis. kamera belum siap)
         Swal.fire({
             title: 'Absensi Berhasil!',
             text: `${student.name} telah tercatat hadir. (Foto tidak tersedia)`,
@@ -320,8 +344,8 @@ function downloadSnapshot() {
 
 // PENTING: WhatsApp (wa.me) tidak menyediakan API gratis untuk mengirim gambar secara
 // otomatis tanpa interaksi pengguna dan tanpa WhatsApp Business API resmi (berbayar & perlu approval).
-// Jadi di sini kita: (1) otomatis download foto ke perangkat, (2) buka chat WA dengan pesan teks siap kirim.
-// Guru/admin tinggal melampirkan foto yang baru saja terdownload itu secara manual di WhatsApp, lalu tekan kirim.
+// Jadi di sini: (1) otomatis download foto ke perangkat, (2) buka chat WA dengan pesan siap kirim.
+// Tinggal lampirkan foto yang baru terdownload itu secara manual di WhatsApp, lalu tekan kirim.
 function sendWhatsAppWithPhoto() {
     if (!lastLogForPhoto) return;
     const { student, time } = lastLogForPhoto;
@@ -331,9 +355,7 @@ function sendWhatsAppWithPhoto() {
         return;
     }
 
-    // Unduh foto otomatis agar siap dilampirkan
     downloadSnapshot();
-
     sendWhatsAppMessage(student, time);
     closePhotoModal();
 }
@@ -382,7 +404,7 @@ function renderReports() {
 
     students.forEach(s => {
         const attendanceCount = attendanceLogs.filter(l => l.studentId === s.id).length;
-        const percentage = (attendanceCount / 30 * 100).toFixed(0); // Misal 30 hari sekolah
+        const percentage = (attendanceCount / 30 * 100).toFixed(0);
         html += `
             <tr class="text-sm">
                 <td class="p-3 font-medium">${s.name}<br><span class="text-[10px] text-slate-400">${s.class}</span></td>
