@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-50 text-slate-800 pb-20">
@@ -53,8 +54,26 @@
                 <button onclick="openStudentModal()" class="bg-green-500 text-white p-2 rounded-full shadow-lg"><i data-lucide="plus"></i></button>
             </div>
             <input type="text" id="search-student" placeholder="Cari nama atau kelas..." class="w-full p-3 rounded-xl border mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
-            <div id="student-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Card Siswa akan muncul di sini -->
+
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-4 py-3 border-b bg-slate-50">
+                    <h3 class="font-bold text-slate-700">Daftar Nama Siswa</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-100 text-xs uppercase text-slate-600">
+                            <tr>
+                                <th class="p-3 w-12">No</th>
+                                <th class="p-3">Nama Siswa</th>
+                                <th class="p-3">Kelas</th>
+                                <th class="p-3 text-center">Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-list" class="divide-y">
+                            <!-- Baris siswa akan muncul di sini -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -156,6 +175,31 @@
                     <button onclick="closeStudentModal()" class="flex-1 py-3 font-semibold text-slate-500">Batal</button>
                     <button onclick="saveStudent()" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold">Simpan</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kartu Siswa (QR Code) -->
+    <div id="modal-student-card" class="fixed inset-0 bg-black/60 hidden z-[65] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden">
+            <div class="bg-indigo-600 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold">Kartu Siswa</h3>
+                <button onclick="closeStudentCardModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="student-card-print" class="print-area p-6 text-center bg-white">
+                <p id="card-school-name" class="text-xs font-bold uppercase text-slate-500 mb-4"></p>
+                <div id="card-qr" class="flex justify-center mb-4"></div>
+                <h4 id="card-student-name" class="text-lg font-bold text-slate-800"></h4>
+                <p id="card-student-class" class="text-sm text-slate-500 mb-1"></p>
+                <p id="card-student-id" class="text-xs text-slate-400"></p>
+            </div>
+            <div class="flex gap-2 p-4 pt-0">
+                <button onclick="editFromCard()" class="flex-1 py-3 bg-slate-100 rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> Edit
+                </button>
+                <button onclick="downloadCardQR()" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Unduh Kartu
+                </button>
             </div>
         </div>
     </div>
